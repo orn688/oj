@@ -65,7 +65,7 @@ def lex_string(string):
 
 def lex_number(string):
     # fmt: off
-    number_regex = (
+    number_regex = (  # noqa: E131
         "^(?P<num>"  # capture the result as a group named `num`
             "("
                 f"(?P<nan>{JSON_NAN})"  # could be NaN (unsigned)
