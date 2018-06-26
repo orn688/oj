@@ -1,16 +1,42 @@
 import re
 
-JSON_SYNTAX = ["{", "}", ":", ","]
-JSON_WHITESPACE = " "
+import attr
+
+from .exceptions import ParseException
+
+JSON_LEFT_BRACE = "{"
+JSON_RIGHT_BRACE = "}"
+JSON_LEFT_BRACKET = "["
+JSON_RIGHT_BRACKET = "]"
+JSON_COMMA = ","
+JSON_COLON = ":"
+JSON_SEPARATORS = [
+    JSON_LEFT_BRACE,
+    JSON_RIGHT_BRACE,
+    JSON_LEFT_BRACKET,
+    JSON_RIGHT_BRACKET,
+    JSON_COMMA,
+    JSON_COLON,
+]
+JSON_WHITESPACE = [" ", "\n", "\t"]
 JSON_QUOTE = '"'
+JSON_NAN = "NaN"
+JSON_INFINITY = "Infinity"
 JSON_TRUE = "true"
 JSON_FALSE = "false"
 JSON_NULL = "null"
-JSON_NAN = "NaN"
-JSON_INFINITY = "Infinity"
 
 
-class ParseException(Exception):
+class JSONToken:
+    pass
+
+
+@attr.s
+class JSONString(JSONToken):
+    value = attr.ib()
+
+
+class JSONNull(JSONToken):
     pass
 
 
@@ -18,7 +44,6 @@ def lex(string):
     tokens = []
 
     while string:
-        print(string)
         json_string, string = lex_string(string)
         if json_string is not None:
             tokens.append(json_string)
@@ -40,7 +65,7 @@ def lex(string):
 
         if string[0] in JSON_WHITESPACE:
             string = string[1:]
-        elif string[0] in JSON_SYNTAX:
+        elif string[0] in JSON_SEPARATORS:
             print(string[0])
             tokens.append(string[0])
             string = string[1:]
@@ -58,43 +83,39 @@ def lex_string(string):
 
     for i, char in enumerate(string):
         if char == JSON_QUOTE:
-            return string[:i], string[i + 1 :]
+            return JSONString(string[:i]), string[i + 1 :]
 
     raise ParseException("Unexpected end of string")
 
 
 def lex_number(string):
-    # fmt: off
-    number_regex = (  # noqa: E131
-        "^(?P<num>"  # capture the result as a group named `num`
-            "("
-                f"(?P<nan>{JSON_NAN})"  # could be NaN (unsigned)
-            "|"
-                "(?P<sign>\+|-)?"  # can have +/- specified
-                "("
-                    f"(?P<inf>{JSON_INFINITY})"  # could be infinity (signed)
-                "|"
-                    "("
-                        "\d+"  # at least one digit
-                        "(\.\d*)?"  # optional decimal places
-                    "|"
-                        "\d*\.\d+"  # 0 or more digits with at least one decimal place
-                    ")"
-                    "(e"
-                        "(-|\+)?\d+"  # optional 'e' exponent
-                    ")?"
-                ")"
-            ")"
-        ")"
-        "(\D|$)"  # end of string or non-numeric character
+    number_regex = re.compile(
+        rf"""
+            (
+                (?P<nan>{JSON_NAN})  # could be NaN (unsigned)
+            |
+                (?P<sign>\+|-)?
+                (
+                    (?P<inf>{JSON_INFINITY})  # could be infinity (signed)
+                |
+                    (
+                        \d+(\.\d*)?  # at least one digit with optional decimal places
+                    |
+                        \d*\.\d+  # zero or more digits with at least one decimal place
+                    )
+                    (e(\+|-)?\d+)?  # optional 'e' integer exponent
+                )
+            )
+            (?=(\D|$))  # end of string or non-numeric character
+        """,
+        re.VERBOSE,
     )
-    # fmt: on
 
-    match = re.match(number_regex, string)
+    match = number_regex.match(string)
     if not match:
         return None, string
 
-    num_string = match.group("num")
+    num_string = match[0]
     sign = match.group("sign") or "+"
     if match.group("nan"):
         num = float("nan")
@@ -119,6 +140,6 @@ def lex_bool(string):
 
 def lex_null(string):
     if string.startswith(JSON_NULL):
-        return True, string[len(JSON_NULL) :]
+        return None, string[len(JSON_NULL) :]
 
     return None, string

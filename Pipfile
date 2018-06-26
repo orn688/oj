@@ -4,6 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+"flake8" = "*"
+attrs = "*"
 
 [dev-packages]
 pytest = "*"
@@ -11,6 +13,7 @@ hypothesis = "*"
 isort = "*"
 black = "*"
 "flake8" = "*"
+pytest-instafail = "*"
 
 [requires]
 python_version = "3.6"
