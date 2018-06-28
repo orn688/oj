@@ -36,6 +36,7 @@ class JSONString(JSONToken):
     value = attr.ib()
 
 
+@attr.s
 class JSONNull(JSONToken):
     pass
 
@@ -140,6 +141,6 @@ def lex_bool(string):
 
 def lex_null(string):
     if string.startswith(JSON_NULL):
-        return None, string[len(JSON_NULL) :]
+        return JSONNull(), string[len(JSON_NULL) :]
 
     return None, string
