@@ -4,19 +4,20 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-"flake8" = "*"
-attrs = "*"
+oj = {editable = true,path = "."}
 
 [dev-packages]
 pytest = "*"
 hypothesis = "*"
 isort = "*"
 black = "*"
-"flake8" = "*"
 pytest-instafail = "*"
+rope = "*"
+"flake8" = "*"
+mypy = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3.7"
 
 [pipenv]
 allow_prereleases = true
