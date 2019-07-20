@@ -1,11 +1,8 @@
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Callable, List, Optional
 
+from oj.exceptions import LexError
 from oj.tokens import Token, TokenType
-
-
-class LexError(Exception):
-    pass
 
 
 @dataclass
@@ -14,21 +11,36 @@ class TokenMatch:
     next_index: int
 
 
+LexFunc = Callable[[str, int], Optional[TokenMatch]]
+
+
 def lex(json_string: str) -> List[Token]:
+    # Ordering of lex functions is based roughly on efficiency of the function
+    # (faster functions first) and how common the corresponding token type is
+    # expected to be (more common first) to avoid expensive negative checks.
+    lex_funcs: List[LexFunc] = [lex_delimiter, lex_bool, lex_null]
+
     tokens: List[Token] = []
     index = 0
-
     while index < len(json_string):
         if json_string[index].isspace():
             index += 1
             continue
-        for lex_func in [lex_delimiter, lex_bool]:
+        for lex_func in lex_funcs:
             match = lex_func(json_string, index)
             if match:
                 tokens.append(match.token)
                 index = match.next_index
                 break
     return tokens
+
+
+def lex_bool(json_string: str, index: int) -> Optional[TokenMatch]:
+    for lexeme in "true", "false":
+        if json_string.startswith(lexeme, index):
+            token = Token(TokenType.BOOLEAN, lexeme)
+            return TokenMatch(token=token, next_index=index + len(lexeme))
+    return None
 
 
 def lex_delimiter(json_string: str, index: int) -> Optional[TokenMatch]:
@@ -47,9 +59,9 @@ def lex_delimiter(json_string: str, index: int) -> Optional[TokenMatch]:
     return TokenMatch(token=token, next_index=index + 1)
 
 
-def lex_bool(json_string: str, index: int) -> Optional[TokenMatch]:
-    for lexeme in "true", "false":
-        if json_string.startswith(lexeme, index):
-            token = Token(TokenType.BOOLEAN, lexeme)
-            return TokenMatch(token=token, next_index=index + len(lexeme))
+def lex_null(json_string: str, index: int) -> Optional[TokenMatch]:
+    null_literal = "null"
+    if json_string.startswith(null_literal, index):
+        token = Token(TokenType.NULL, null_literal)
+        return TokenMatch(token=token, next_index=index + len(null_literal))
     return None

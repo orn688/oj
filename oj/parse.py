@@ -46,16 +46,24 @@ def parse_list(tokens: List[Token], index: int) -> Tuple[List[Any], int]:
     return result_list, index
 
 
-def parse_value(tokens: List[Token], index: int) -> Tuple[Union[List[Any], bool], int]:
+def parse_value(
+    tokens: List[Token], index: int
+) -> Tuple[Any, int]:
     token = tokens[index]
     if token.token_type == TokenType.BOOLEAN:
-        if token.lexeme == "true":
-            return True, index + 1
-        elif token.lexeme == "false":
-            return False, index + 1
-        else:
-            raise _BadToken("invalid boolean lexeme")
+        return parse_boolean(token), index + 1
+    elif token.token_type == TokenType.NULL:
+        return None, index + 1
     elif token.token_type == TokenType.OPEN_BRACKET:
         return parse_list(tokens, index)
     else:
         raise NotImplementedError(f"can't parse tokens of type {token.token_type.name}")
+
+
+def parse_boolean(token: Token) -> bool:
+    if token.lexeme == "true":
+        return True
+    elif token.lexeme == "false":
+        return False
+    else:
+        raise _BadToken("invalid boolean lexeme")

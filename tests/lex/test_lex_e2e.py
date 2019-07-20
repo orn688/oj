@@ -3,12 +3,14 @@ from oj.tokens import Token, TokenType
 
 
 def test_lex_list():
-    raw = "[true, false]"
+    raw = "[true, false, null]"
     assert lex(raw) == [
         Token(TokenType.OPEN_BRACKET, "["),
         Token(TokenType.BOOLEAN, "true"),
         Token(TokenType.COMMA, ","),
         Token(TokenType.BOOLEAN, "false"),
+        Token(TokenType.COMMA, ","),
+        Token(TokenType.NULL, "null"),
         Token(TokenType.CLOSE_BRACKET, "]"),
     ]
 
