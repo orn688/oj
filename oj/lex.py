@@ -1,28 +1,11 @@
 from dataclasses import dataclass
-from enum import Enum, auto
 from typing import List, Optional
 
-
-class TokenType(Enum):
-    LEFT_BRACE = auto()
-    RIGHT_BRACE = auto()
-    LEFT_BRACKET = auto()
-    RIGHT_BRACKET = auto()
-    COMMA = auto()
-    COLON = auto()
-    STRING = auto()
-    NUMBER = auto()
-    BOOLEAN = auto()
+from oj.tokens import Token, TokenType
 
 
 class LexError(Exception):
     pass
-
-
-@dataclass
-class Token:
-    token_type: TokenType
-    lexeme: str
 
 
 @dataclass
@@ -50,10 +33,10 @@ def lex(json_string: str) -> List[Token]:
 
 def lex_delimiter(json_string: str, index: int) -> Optional[TokenMatch]:
     delimiter_types = {
-        "{": TokenType.LEFT_BRACE,
-        "}": TokenType.RIGHT_BRACE,
-        "[": TokenType.LEFT_BRACKET,
-        "]": TokenType.RIGHT_BRACKET,
+        "{": TokenType.OPEN_BRACE,
+        "}": TokenType.CLOSE_BRACE,
+        "[": TokenType.OPEN_BRACKET,
+        "]": TokenType.CLOSE_BRACKET,
         ",": TokenType.COMMA,
         ":": TokenType.COLON,
     }
