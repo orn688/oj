@@ -4,7 +4,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from oj.lex import LexFunc, lex_bool, lex_delimiter, lex_null
+from oj.lex import LexFunc, lex_bool, lex_delimiter, lex_null, lex_string
 from oj.tokens import TokenType
 
 
@@ -58,3 +58,8 @@ delimiters = {
 @pytest.mark.parametrize("delimiter,expected_token_type", delimiters.items())
 def test_lex_delimiter_positive(delimiter, expected_token_type):
     assert_lexes_literal(lex_delimiter, delimiter, expected_token_type)
+
+
+@given(st.from_regex(r'"[^\\"]*"', fullmatch=True))
+def test_lex_string_positive(string_literal):
+    assert_lexes_literal(lex_string, string_literal, TokenType.STRING)

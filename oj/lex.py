@@ -65,3 +65,25 @@ def lex_null(json_string: str, index: int) -> Optional[TokenMatch]:
         token = Token(TokenType.NULL, null_literal)
         return TokenMatch(token=token, next_index=index + len(null_literal))
     return None
+
+
+def lex_string(json_string: str, index: int) -> Optional[TokenMatch]:
+    quote = '"'
+    if json_string[index] != quote:
+        return None
+    close_index = index + 1
+    escaped = False  # If the last character was a backslash.
+    while close_index < len(json_string):
+        if escaped:
+            escaped = False
+            continue
+
+        char = json_string[close_index]
+        if char == "\\":
+            escaped = True
+        elif char == quote:
+            lexeme = json_string[index : close_index + 1]
+            token = Token(TokenType.STRING, lexeme)
+            return TokenMatch(token=token, next_index=close_index + 1)
+
+    raise LexError("unterminated string")
