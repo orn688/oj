@@ -1,12 +1,13 @@
-from typing import IO, List, Any
+from typing import IO, Union
+
 from oj.lex import lex
 from oj.parse import parse
 
 
-def loads(json_string: str) -> List[Any]:
+def loads(json_string: str) -> Union[None, bool, float, str, list, dict]:
     tokens = lex(json_string)
     return parse(tokens)
 
 
-def load(json_file: IO) -> List[bool]:
+def load(json_file: IO) -> Union[None, bool, float, str, list, dict]:
     return loads(json_file.read())

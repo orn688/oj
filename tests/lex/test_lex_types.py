@@ -63,3 +63,8 @@ def test_lex_delimiter_positive(delimiter, expected_token_type):
 @given(st.from_regex(r'"[^\\"]*"', fullmatch=True))
 def test_lex_string_positive(string_literal):
     assert_lexes_literal(lex_string, string_literal, TokenType.STRING)
+
+
+def test_lex_string_with_escapes():
+    string_literal = r'"string with a \\ (backslash) and \" (quote)"'
+    assert_lexes_literal(lex_string, string_literal, TokenType.STRING)

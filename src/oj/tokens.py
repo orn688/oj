@@ -19,3 +19,4 @@ class TokenType(Enum):
 class Token:
     token_type: TokenType
     lexeme: str
+    index: int

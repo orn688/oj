@@ -8,9 +8,10 @@ fmt:
 	pipenv run isort --recursive .
 
 lint:
-	pipenv run flake8
 	pipenv run black --check --diff .
 	pipenv run isort --recursive --check-only --diff --recursive .
+	pipenv run flake8
+	pipenv run mypy --ignore-missing-imports .
 
 test:
 	pipenv run pytest --verbose --durations=5
