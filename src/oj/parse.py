@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from oj.exceptions import InvalidJSON
 from oj.tokens import Token, TokenType
@@ -40,7 +40,55 @@ def parse_boolean(token: Token) -> bool:
 
 
 def parse_string(token: Token) -> str:
-    return token.lexeme
+    has_quotes = token.lexeme.startswith('"') and token.lexeme.endswith('"')
+    assert has_quotes, "string lexeme not quoted"
+
+    chars: List[str] = []
+    escaped = False
+    current_unicode_literal: Optional[List[str]] = None
+    for i in range(1, len(token.lexeme) - 1):
+        char = token.lexeme[i]
+        if current_unicode_literal is not None:
+            current_unicode_literal.append(char)
+            if len(current_unicode_literal) == 4:
+                try:
+                    char_point = int("".join(current_unicode_literal), base=16)
+                except ValueError:
+                    raise InvalidJSON("invalid hex in unicode literal")
+                chars.append(chr(char_point))
+                current_unicode_literal = None
+        elif not escaped and char == "\\":
+            # Backlash; escape the next character.
+            escaped = True
+        elif escaped:
+            # The previous character was a backslash.
+            escaped = False
+            if char == "u":
+                current_unicode_literal = []
+            else:
+                try:
+                    escape_char = {
+                        "b": "\b",
+                        "f": "\f",
+                        "n": "\n",
+                        "r": "\r",
+                        "t": "\t",
+                        '"': '"',
+                        "\\": "\\",
+                    }[char]
+                except KeyError:
+                    raise InvalidJSON("invalid \\escape")
+                chars.append(escape_char)
+        else:
+            # Regular old character.
+            chars.append(char)
+
+    if current_unicode_literal is not None:
+        raise InvalidJSON("unterminated unicode literal")
+    if escaped:
+        raise InvalidJSON("unterminated escape sequence")
+
+    return "".join(chars)
 
 
 def parse_list(tokens: List[Token], index: int) -> Tuple[List[Any], int]:

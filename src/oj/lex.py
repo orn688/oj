@@ -1,6 +1,5 @@
-import re
 from dataclasses import dataclass
-from typing import Callable, List, Match, Optional
+from typing import Callable, List, Optional
 
 from oj.exceptions import LexError
 from oj.tokens import Token, TokenType
@@ -72,45 +71,23 @@ def lex_null(json_string: str, index: int) -> Optional[TokenMatch]:
 
 
 def lex_string(json_string: str, index: int) -> Optional[TokenMatch]:
-    quote = '"'
-    backslash = "\\"
-    if json_string[index] != quote:
+    if json_string[index] != '"':
         return None
 
     close_index = index + 1
-    escaped = False  # If the last character was a backslash.
-    chars: List[str] = []
+    # Whether the previous character was a backslash preceded by an even number of
+    # backslashes.
+    escaped = False
     for close_index in range(index + 1, len(json_string)):
         char = json_string[close_index]
-        if not escaped and char == backslash:
+        if not escaped and char == "\\":
             escaped = True
-        elif not escaped and char == quote:
-            string = python_unicode("".join(chars))
+        elif escaped:
+            escaped = False
+        elif char == '"':
+            string = json_string[index : close_index + 1]
             token = Token(TokenType.STRING, string, index)
             return TokenMatch(token=token, next_index=close_index + 1)
-        else:
-            if escaped:
-                escaped = False
-                char = {
-                    "b": "\b",
-                    "f": "\f",
-                    "n": "\n",
-                    "r": "\r",
-                    "t": "\t",
-                    # For unicode literals (starting with "\u"), leave the preceding
-                    # backslash to be searched and replaced later.
-                    "u": "\\u",
-                }.get(char, char)
-            chars.append(char)
 
     # Got to the end of the input string without finding a closing quote.
     raise LexError(f"unterminated string starting at index {index}")
-
-
-def python_unicode(json_string: str) -> str:
-    def replace_func(match: Match[str]) -> str:
-        char_point_digits = match.group("hex").lstrip("\\u")
-        char_point = int(char_point_digits, base=16)
-        return chr(char_point)
-
-    return re.sub(r"(?P<hex>\\u[\da-f]{4})", replace_func, json_string)
