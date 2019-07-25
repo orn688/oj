@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union, Dict
 
 from oj.exceptions import InvalidJSON
 from oj.tokens import Token, TokenType
@@ -22,12 +22,17 @@ def parse_value(tokens: List[Token], index: int) -> Tuple[Any, int]:
         return None, index + 1
     elif token.token_type == TokenType.BOOLEAN:
         return parse_boolean(token), index + 1
+    elif token.token_type == TokenType.NUMBER:
+        # TODO
+        raise NotImplementedError("can't parse numbers")
     elif token.token_type == TokenType.STRING:
         return parse_string(token), index + 1
     elif token.token_type == TokenType.OPEN_BRACKET:
         return parse_list(tokens, index)
+    elif token.token_type == TokenType.OPEN_BRACE:
+        return parse_object(tokens, index)
     else:
-        raise NotImplementedError(f"can't parse tokens of type {token.token_type.name}")
+        raise InvalidJSON(f"expecting value at index {index}")
 
 
 def parse_boolean(token: Token) -> bool:
@@ -106,14 +111,54 @@ def parse_list(tokens: List[Token], index: int) -> Tuple[List[Any], int]:
             # A comma or close bracket should come next, not another value.
             expecting_value = False
         else:
-            index += 1
             if token.token_type == TokenType.COMMA:
                 # Another value *must* come next. We can't have two commas in a row or
                 # a comma immediately before a close bracket.
                 expecting_value = True
+                index += 1
             elif token.token_type == TokenType.CLOSE_BRACKET:
                 # Found the end of the list.
                 break
             else:
                 raise InvalidJSON("expecting comma or close bracket in list")
-    return result_list, index
+    return result_list, index + 1
+
+
+def parse_object(tokens: List[Token], index: int) -> Tuple[Dict[str, Any], int]:
+    assert tokens[index].token_type == TokenType.OPEN_BRACE
+    index += 1
+
+    result_dict: Dict[str, Any] = {}
+    expecting_value = True
+    expecting_colon = False
+    current_key: Optional[str] = None
+    while index < len(tokens):
+        token = tokens[index]
+        if expecting_value:
+            if current_key is None:
+                current_key = parse_string(token)
+                expecting_colon = True
+                index += 1
+            else:
+                value, index = parse_value(tokens, index)
+                result_dict[current_key] = value
+                current_key = None
+            expecting_value = False
+        elif expecting_colon:
+            if token.token_type != TokenType.COLON:
+                raise InvalidJSON(f"expected colon at index {index}")
+            expecting_colon = False
+            expecting_value = True
+            index += 1
+        else:
+            # We reached the end of a key/value pair, so we expect either a comma, or a
+            # close brace to end the object.
+            if token.token_type == TokenType.COMMA:
+                expecting_value = True
+                index += 1
+            elif token.token_type == TokenType.CLOSE_BRACE:
+                # Found the end of the object.
+                break
+            else:
+                raise InvalidJSON(f"expected comma or close brace at index {index}")
+    return result_dict, index + 1
