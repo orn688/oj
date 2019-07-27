@@ -79,6 +79,7 @@ def parse_string(token: Token) -> str:
                         "r": "\r",
                         "t": "\t",
                         '"': '"',
+                        "/": "/",
                         "\\": "\\",
                     }[char]
                 except KeyError:

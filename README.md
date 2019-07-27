@@ -11,7 +11,7 @@ Parsing:
 - [x] nulls
 - [x] booleans
 - [ ] numbers
-  - [ ] NaNs
+  - [ ] NaN
   - [ ] +/- Infinity
   - [ ] exponents (e.g. 2.4e5)
 - [x] strings
