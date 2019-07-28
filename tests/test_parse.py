@@ -3,7 +3,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from oj.exceptions import InvalidJSON
-from oj.parse import parse_string, parse_number
+from oj.parse import parse_number, parse_string
 from oj.tokens import Token, TokenType
 
 
@@ -57,6 +57,6 @@ def test_parse_number_rejects_leading_zeros():
 # Limit the size of the exponent so that base * 10**exponent doesn't overflow.
 @given(base=st.floats(-100, 100), exponent=st.integers(-20, 20))
 def test_parse_number_scientific_notations(base, exponent):
-    token = Token(TokenType.NUMBER, f'{base}e{exponent}', 0)
+    token = Token(TokenType.NUMBER, f"{base}e{exponent}", 0)
     expected = float(base) * (10.0 ** exponent)
     assert pytest.approx(parse_number(token), expected, abs=1e-20)

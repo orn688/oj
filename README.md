@@ -19,5 +19,5 @@ OJ is capable of parsing:
 - [x] strings
   - [x] escape characters
   - [x] hex characters (e.g. "\u00ff")
-- [ ] objects (can't do empty yet)
-- [ ] lists (can't do empty yet)
+- [x] objects
+- [x] lists

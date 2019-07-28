@@ -14,4 +14,4 @@ lint:
 	pipenv run flake8
 
 test:
-	pipenv run pytest --verbose --durations=5
+	pipenv run pytest --durations=5

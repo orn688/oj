@@ -97,7 +97,7 @@ def lex_infinity(json_string: str, start_index: int) -> Optional[TokenMatch]:
 
 
 def lex_number(json_string: str, start_index: int) -> Optional[TokenMatch]:
-    number_chars = {'-', '+', '.', 'e', 'E'} | set(map(str, range(10)))
+    number_chars = {"-", "+", ".", "e", "E"} | set(map(str, range(10)))
     end_index = start_index
     while end_index < len(json_string) and json_string[end_index] in number_chars:
         end_index += 1

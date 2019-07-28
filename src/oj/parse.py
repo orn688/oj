@@ -105,7 +105,7 @@ def _parse_integer(
 
     if (
         not allow_leading_zeros
-        and literal[start_index] == '0'
+        and literal[start_index] == "0"
         and index - start_index > 1
     ):
         raise InvalidJSON("leading zeros in number")
@@ -179,6 +179,10 @@ def parse_list(tokens: List[Token], index: int) -> Tuple[List[Any], int]:
     index += 1
 
     result_list: List[Any] = []
+    if tokens[index].token_type == TokenType.CLOSE_BRACKET:
+        # Empty list.
+        return result_list, index + 1
+
     expecting_value = True
     while index < len(tokens):
         token = tokens[index]
@@ -207,6 +211,10 @@ def parse_object(tokens: List[Token], index: int) -> Tuple[Dict[str, Any], int]:
     index += 1
 
     result_dict: Dict[str, Any] = {}
+    if tokens[index].token_type == TokenType.CLOSE_BRACE:
+        # Empty dict.
+        return result_dict, index + 1
+
     expecting_value = True
     expecting_colon = False
     current_key: Optional[str] = None

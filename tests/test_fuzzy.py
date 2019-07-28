@@ -11,17 +11,13 @@ import oj
 @st.composite
 def raw_json(draw):
     strategy = st.recursive(
-        st.none()
-        | st.booleans()
-        | st.floats(allow_nan=True, allow_infinity=True)
+        st.none() | st.booleans() | st.floats(allow_nan=True, allow_infinity=True)
         # JSON doesn't technically have integers, but all Python floats have decimal
         # places when passed through json.dumps() and we want to test parsing of JSON
         # numbers without decimal places too.
-        | st.integers()
-        | st.text(printable),
+        | st.integers() | st.text(printable),
         lambda children: (
-            st.lists(children)
-            | st.dictionaries(st.text(printable), children)
+            st.lists(children) | st.dictionaries(st.text(printable), children)
         ),
     )
     python_object = draw(strategy)
