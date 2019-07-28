@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable, List, Optional
 
-from oj.exceptions import LexError
+from oj.exceptions import InvalidJSON
 from oj.tokens import Token, TokenType
 
 
@@ -23,7 +23,8 @@ def lex(json_string: str) -> List[Token]:
         lex_null,
         lex_bool,
         lex_nan,
-        lex_infinity,
+        lex_infinity,  # Must come before lex_number, as both check for negative sign.
+        lex_number,
         lex_string,
     ]
 
@@ -41,7 +42,7 @@ def lex(json_string: str) -> List[Token]:
                 index = match.next_index
                 break
         if not match:
-            raise LexError(f"invalid character at index {index}")
+            raise InvalidJSON(f"invalid character at index {index}")
     return tokens
 
 
@@ -79,7 +80,7 @@ def lex_null(json_string: str, start_index: int) -> Optional[TokenMatch]:
 
 def lex_nan(json_string: str, start_index: int) -> Optional[TokenMatch]:
     nan_literal = "NaN"
-    if json_string.startswith(nan_literal, start=start_index):
+    if json_string.startswith(nan_literal, start_index):
         token = Token(TokenType.NAN, nan_literal, start_index)
         return TokenMatch(token=token, next_index=start_index + len(nan_literal))
     return None
@@ -89,10 +90,21 @@ def lex_infinity(json_string: str, start_index: int) -> Optional[TokenMatch]:
     inf_literal = "Infinity"
     negative_inf_literal = "-" + inf_literal
     for literal in (inf_literal, negative_inf_literal):
-        if json_string.startswith(literal, start=start_index):
+        if json_string.startswith(literal, start_index):
             token = Token(TokenType.INFINITY, literal, start_index)
             return TokenMatch(token=token, next_index=start_index + len(literal))
     return None
+
+
+def lex_number(json_string: str, start_index: int) -> Optional[TokenMatch]:
+    number_chars = {'-', '+', '.', 'e', 'E'} | set(map(str, range(10)))
+    end_index = start_index
+    while end_index < len(json_string) and json_string[end_index] in number_chars:
+        end_index += 1
+    if end_index == start_index:
+        return None
+    token = Token(TokenType.NUMBER, json_string[start_index:end_index], start_index)
+    return TokenMatch(token=token, next_index=end_index)
 
 
 def lex_string(json_string: str, start_index: int) -> Optional[TokenMatch]:
@@ -115,4 +127,4 @@ def lex_string(json_string: str, start_index: int) -> Optional[TokenMatch]:
             return TokenMatch(token=token, next_index=close_index + 1)
 
     # Got to the end of the input string without finding a closing quote.
-    raise LexError(f"unterminated string starting at index {start_index}")
+    raise InvalidJSON(f"unterminated string starting at index {start_index}")

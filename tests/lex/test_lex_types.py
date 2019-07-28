@@ -4,7 +4,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from oj.lex import LexFunc, lex_bool, lex_delimiter, lex_null, lex_string
+from oj.lex import LexFunc, lex_bool, lex_delimiter, lex_null, lex_number, lex_string
 from oj.tokens import TokenType
 
 
@@ -68,3 +68,10 @@ def test_lex_string_positive(string_literal):
 def test_lex_string_with_escapes():
     string_literal = r'"string with a \\ (backslash) and \" (quote)"'
     assert_lexes_literal(lex_string, string_literal, TokenType.STRING)
+
+
+@pytest.mark.parametrize(
+    "num", ["0", "5", "5.0", "0.0", "-0", "-1.0", "1e5", "1E5", "1E+5"]
+)
+def test_lex_number_positive(num):
+    assert_lexes_literal(lex_number, num, TokenType.NUMBER)

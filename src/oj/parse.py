@@ -1,4 +1,5 @@
-from typing import Any, List, Optional, Tuple, Union, Dict
+import math
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from oj.exceptions import InvalidJSON
 from oj.tokens import Token, TokenType
@@ -23,8 +24,17 @@ def parse_value(tokens: List[Token], index: int) -> Tuple[Any, int]:
     elif token.token_type == TokenType.BOOLEAN:
         return parse_boolean(token), index + 1
     elif token.token_type == TokenType.NUMBER:
-        # TODO
-        raise NotImplementedError("can't parse numbers")
+        return parse_number(token), index + 1
+    elif token.token_type == TokenType.INFINITY:
+        if token.lexeme == "Infinity":
+            return math.inf, index + 1
+        elif token.lexeme == "-Infinity":
+            return -math.inf, index + 1
+        else:
+            raise _BadToken("invalid infinity lexeme")
+    elif token.token_type == TokenType.NAN:
+        assert token.lexeme == "NaN", "NaN token lexeme must be 'NaN'"
+        return math.nan, index + 1
     elif token.token_type == TokenType.STRING:
         return parse_string(token), index + 1
     elif token.token_type == TokenType.OPEN_BRACKET:
@@ -42,6 +52,72 @@ def parse_boolean(token: Token) -> bool:
         return False
     else:
         raise _BadToken("invalid boolean lexeme")
+
+
+def parse_number(token: Token) -> Union[int, float]:
+    number: Union[int, float]
+    literal = token.lexeme
+    number, index = _parse_integer(literal)
+
+    if index < len(literal) and literal[index] == ".":
+        number = float(number)
+        index += 1
+        decimal_places = 0
+        while index < len(literal) and literal[index].isdigit():
+            decimal_places += 1
+            number += _parse_digit(literal[index]) / (10 ** decimal_places)
+            index += 1
+        if decimal_places == 0:
+            raise InvalidJSON("no decimal places after period")
+
+    if index < len(literal) and literal[index].lower() == "e":
+        exponent, index = _parse_integer(
+            literal, index + 1, allow_plus=True, allow_leading_zeros=True
+        )
+        number = float(number) * (10 ** exponent)
+
+    return number
+
+
+def _parse_integer(
+    literal: str,
+    start_index: int = 0,
+    allow_plus: bool = False,
+    allow_leading_zeros: bool = False,
+) -> Tuple[int, int]:
+    if start_index >= len(literal):
+        raise InvalidJSON("expected number")
+
+    is_negative = literal[start_index] == "-"
+    if literal[start_index] == "-" or (allow_plus and literal[start_index] == "+"):
+        start_index += 1
+
+    index = start_index
+    integer = 0
+    # We could just use the int(str) function, but that would be cheating.
+    while index < len(literal) and literal[index].isdigit():
+        integer *= 10
+        integer += _parse_digit(literal[index])
+        index += 1
+
+    if index == start_index:
+        raise InvalidJSON("expected number")
+
+    if (
+        not allow_leading_zeros
+        and literal[start_index] == '0'
+        and index - start_index > 1
+    ):
+        raise InvalidJSON("leading zeros in number")
+
+    if is_negative:
+        integer *= -1
+    return integer, index
+
+
+def _parse_digit(digit: str) -> int:
+    # Again, int() is easy but cheating.
+    return ord(digit) - ord("0")
 
 
 def parse_string(token: Token) -> str:
@@ -106,6 +182,7 @@ def parse_list(tokens: List[Token], index: int) -> Tuple[List[Any], int]:
     expecting_value = True
     while index < len(tokens):
         token = tokens[index]
+        # TODO: what if the list is empty?
         if expecting_value:
             value, index = parse_value(tokens, index)
             result_list.append(value)
@@ -135,6 +212,7 @@ def parse_object(tokens: List[Token], index: int) -> Tuple[Dict[str, Any], int]:
     current_key: Optional[str] = None
     while index < len(tokens):
         token = tokens[index]
+        # TODO: what if the dict is empty?
         if expecting_value:
             if current_key is None:
                 current_key = parse_string(token)

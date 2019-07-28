@@ -6,15 +6,18 @@ Based on [Phil Eaton's tutorial](http://notes.eatonphil.com/writing-a-simple-jso
 
 ## Features
 
-Parsing:
+OJ is capable of parsing:
 
 - [x] nulls
 - [x] booleans
-- [ ] numbers
-  - [ ] exponents (e.g. 2.4e5)
-  - [ ] NaN (not in the JSON spec, but supported by Python)
-  - [ ] +/- Infinity (not in the JSON spec, but supported by Python)
+- [x] numbers
+  - [x] integers
+  - [x] floats
+  - [x] exponents (e.g. 2.4e5)
+  - [x] NaN (not in the JSON spec, but supported by Python)
+  - [x] +/- Infinity (not in the JSON spec, but supported by Python)
 - [x] strings
-  - [x] unicode characters (e.g. "\u00ff")
-- [x] objects
-- [x] lists
+  - [x] escape characters
+  - [x] hex characters (e.g. "\u00ff")
+- [ ] objects (can't do empty yet)
+- [ ] lists (can't do empty yet)
