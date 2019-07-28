@@ -11,9 +11,9 @@ Parsing:
 - [x] nulls
 - [x] booleans
 - [ ] numbers
-  - [ ] NaN
-  - [ ] +/- Infinity
   - [ ] exponents (e.g. 2.4e5)
+  - [ ] NaN (not in the JSON spec, but supported by Python)
+  - [ ] +/- Infinity (not in the JSON spec, but supported by Python)
 - [x] strings
   - [x] unicode characters (e.g. "\u00ff")
 - [x] objects

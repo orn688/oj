@@ -11,6 +11,8 @@ class TokenType(Enum):
     COLON = auto()
     STRING = auto()
     NUMBER = auto()
+    NAN = auto()
+    INFINITY = auto()
     BOOLEAN = auto()
     NULL = auto()
 

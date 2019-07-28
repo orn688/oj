@@ -10,7 +10,12 @@ import oj
 @st.composite
 def raw_json(draw):
     strategy = st.recursive(
-        st.none() | st.booleans() | st.text(printable),  # st.floats() |
+        st.none()
+        | st.booleans()
+        # The JSON standard doesn't include NaN or infinity, but the Python standard
+        # library json module does.
+        | st.floats(allow_nan=True, allow_infinity=True)
+        | st.text(printable),
         lambda children: (
             st.lists(children, 1)
             | st.dictionaries(st.text(printable), children, min_size=1)
