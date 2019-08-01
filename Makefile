@@ -14,4 +14,8 @@ lint:
 	pipenv run flake8
 
 test:
-	pipenv run pytest --durations=5
+	# Exclude slower fuzz tests by default.
+	pipenv run pytest -v -m "not fuzz"
+
+testall:
+	pipenv run pytest

@@ -4,6 +4,8 @@ from typing import Callable, List, Optional
 from oj.exceptions import InvalidJSON
 from oj.tokens import Token, TokenType
 
+JSON_WHITESPACE = " \t\r\n"
+
 
 @dataclass
 class TokenMatch:
@@ -31,7 +33,7 @@ def lex(json_string: str) -> List[Token]:
     tokens: List[Token] = []
     index = 0
     while index < len(json_string):
-        if json_string[index].isspace():
+        if json_string[index] in JSON_WHITESPACE:
             index += 1
             continue
         match: Optional[TokenMatch]

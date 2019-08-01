@@ -2,10 +2,11 @@ import json
 from string import printable
 
 import pytest
-from hypothesis import given
+from hypothesis import example, given, settings
 from hypothesis import strategies as st
 
 import oj
+from oj.exceptions import InvalidJSON
 
 
 @st.composite
@@ -22,6 +23,20 @@ def raw_json(draw):
     )
     python_object = draw(strategy)
     return json.dumps(python_object, indent=2)
+
+
+@st.composite
+def corrupted_json(draw):
+    """Generates raw JSON strings with one character removed.
+
+    The intention is to generate inputs that are likely to trigger corner cases and
+    find bugs in the parsing of malformed inputs.
+    """
+    original = draw(raw_json())
+    # original should never be empty (the shortest it can be is a single digit) so it's
+    # safe to remove a random character.
+    index_to_remove = draw(st.integers(0, len(original)))
+    return original[: index_to_remove - 1] + original[index_to_remove:]
 
 
 def assert_json_equal(object1, object2):
@@ -54,5 +69,55 @@ def assert_json_equal(object1, object2):
 
 
 @given(raw_json())
-def test_compared_to_stdlib(input_json):
+@pytest.mark.fuzz
+def test_compared_to_stdlib_success(input_json):
     assert_json_equal(oj.loads(input_json), json.loads(input_json))
+
+
+@given(corrupted_json())
+@settings(max_examples=200)
+@pytest.mark.fuzz
+def test_compared_to_stdlib_corrupted_json(input_json):
+    # Randomly removing a character isn't guaranteed to make the input invalid (e.g.,
+    # if we happen to remove a character from the middle of a string), so it's possible
+    # that parsing the input shouldn't raise an exception. Therefore, we only care that
+    # oj.loads(x) raises an exception iff json.loads(x) raises an exception for all
+    # strings x.
+    try:
+        json.loads(input_json)
+    except json.JSONDecodeError:
+        stdlib_raises = True
+    else:
+        stdlib_raises = False
+
+    try:
+        oj_result = oj.loads(input_json)
+    except InvalidJSON as exc:
+        oj_raises = True
+        oj_result = exc
+    else:
+        oj_raises = False
+
+    assert stdlib_raises == oj_raises, oj_result
+
+
+@given(st.text())
+@settings(max_examples=2000)
+@pytest.mark.fuzz
+def test_compared_to_stdlib_random_text(input_text):
+    try:
+        json.loads(input_text)
+    except json.JSONDecodeError:
+        stdlib_raises = True
+    else:
+        stdlib_raises = False
+
+    try:
+        oj_result = oj.loads(input_text)
+    except InvalidJSON as exc:
+        oj_raises = True
+        oj_result = exc
+    else:
+        oj_raises = False
+
+    assert stdlib_raises == oj_raises, oj_result

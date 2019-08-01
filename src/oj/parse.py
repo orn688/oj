@@ -5,10 +5,6 @@ from oj.exceptions import InvalidJSON
 from oj.tokens import Token, TokenType
 
 
-class _BadToken(AssertionError):
-    pass
-
-
 def parse(tokens: List[Token]) -> Union[None, bool, float, str, list, dict]:
     value, next_index = parse_value(tokens, 0)
     if next_index != len(tokens):
@@ -17,6 +13,8 @@ def parse(tokens: List[Token]) -> Union[None, bool, float, str, list, dict]:
 
 
 def parse_value(tokens: List[Token], index: int) -> Tuple[Any, int]:
+    if index >= len(tokens):
+        raise InvalidJSON(f"expecting value at index {index}")
     token = tokens[index]
     if token.token_type == TokenType.NULL:
         assert token.lexeme == "null", "null token lexeme must be 'null'"
@@ -30,15 +28,14 @@ def parse_value(tokens: List[Token], index: int) -> Tuple[Any, int]:
             return math.inf, index + 1
         elif token.lexeme == "-Infinity":
             return -math.inf, index + 1
-        else:
-            raise _BadToken("invalid infinity lexeme")
+        assert False, "invalid infinity lexeme"
     elif token.token_type == TokenType.NAN:
         assert token.lexeme == "NaN", "NaN token lexeme must be 'NaN'"
         return math.nan, index + 1
     elif token.token_type == TokenType.STRING:
         return parse_string(token), index + 1
     elif token.token_type == TokenType.OPEN_BRACKET:
-        return parse_list(tokens, index)
+        return parse_array(tokens, index)
     elif token.token_type == TokenType.OPEN_BRACE:
         return parse_object(tokens, index)
     else:
@@ -51,7 +48,7 @@ def parse_boolean(token: Token) -> bool:
     elif token.lexeme == "false":
         return False
     else:
-        raise _BadToken("invalid boolean lexeme")
+        assert False, "invalid boolean lexeme"
 
 
 def parse_number(token: Token) -> Union[int, float]:
@@ -75,6 +72,9 @@ def parse_number(token: Token) -> Union[int, float]:
             literal, index + 1, allow_plus=True, allow_leading_zeros=True
         )
         number = float(number) * (10 ** exponent)
+
+    if index < len(literal):
+        raise InvalidJSON("unexpected characters after number")
 
     return number
 
@@ -173,10 +173,12 @@ def parse_string(token: Token) -> str:
     return "".join(chars)
 
 
-def parse_list(tokens: List[Token], index: int) -> Tuple[List[Any], int]:
+def parse_array(tokens: List[Token], index: int) -> Tuple[List[Any], int]:
     """Parses a JSON list whose open bracket is at `index` in `tokens`."""
     assert tokens[index].token_type == TokenType.OPEN_BRACKET
     index += 1
+    if index >= len(tokens):
+        raise InvalidJSON("unterminated array")
 
     result_list: List[Any] = []
     if tokens[index].token_type == TokenType.CLOSE_BRACKET:
@@ -209,6 +211,8 @@ def parse_list(tokens: List[Token], index: int) -> Tuple[List[Any], int]:
 def parse_object(tokens: List[Token], index: int) -> Tuple[Dict[str, Any], int]:
     assert tokens[index].token_type == TokenType.OPEN_BRACE
     index += 1
+    if index >= len(tokens):
+        raise InvalidJSON("unterminated object")
 
     result_dict: Dict[str, Any] = {}
     if tokens[index].token_type == TokenType.CLOSE_BRACE:
@@ -223,6 +227,8 @@ def parse_object(tokens: List[Token], index: int) -> Tuple[Dict[str, Any], int]:
         # TODO: what if the dict is empty?
         if expecting_value:
             if current_key is None:
+                if token.token_type != TokenType.STRING:
+                    raise InvalidJSON("object keys must be strings")
                 current_key = parse_string(token)
                 expecting_colon = True
                 index += 1

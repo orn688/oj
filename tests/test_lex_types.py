@@ -4,8 +4,16 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from oj.lex import LexFunc, lex_bool, lex_delimiter, lex_null, lex_number, lex_string
-from oj.tokens import TokenType
+from oj.lex import (
+    LexFunc,
+    lex,
+    lex_bool,
+    lex_delimiter,
+    lex_null,
+    lex_number,
+    lex_string,
+)
+from oj.tokens import Token, TokenType
 
 
 def assert_lexes_literal(
@@ -14,14 +22,14 @@ def assert_lexes_literal(
     expected_token_type: TokenType,
     expected_lexeme: Optional[str] = None,
 ) -> None:
-    match = lex_func(json_literal, 0)
-    assert match is not None
-    assert match.next_index == len(json_literal)
-    assert match.token.token_type == expected_token_type
     if expected_lexeme is None:
         # Assume that the lexeme is the entire input string unless the expected lexeme
         # is explicitly specified.
         expected_lexeme = json_literal
+    match = lex_func(json_literal, 0)
+    assert match is not None
+    assert match.next_index == len(expected_lexeme)
+    assert match.token.token_type == expected_token_type
     assert match.token.lexeme == expected_lexeme
 
 
@@ -30,19 +38,8 @@ def test_lex_bool_positive(bool_literal):
     assert_lexes_literal(lex_bool, bool_literal, TokenType.BOOLEAN)
 
 
-@given(st.from_regex(r"^(?!true|false)"))
-def test_lex_bool_negative(json_string):
-    match = lex_bool(json_string, 0)
-    assert match is None
-
-
 def test_lex_null_positive():
-    assert_lexes_literal(lex_null, "null", TokenType.NULL)
-
-
-@given(st.from_regex(r"^(?!null)"))
-def test_lex_null_negative(json_string):
-    assert_lexes_literal(lex_null, "null", TokenType.NULL)
+    assert_lexes_literal(lex_null, "null", TokenType.NULL, "null")
 
 
 delimiters = {
@@ -75,3 +72,31 @@ def test_lex_string_with_escapes():
 )
 def test_lex_number_positive(num):
     assert_lexes_literal(lex_number, num, TokenType.NUMBER)
+
+
+def test_lex_list():
+    raw = "[true, false, null]"
+    assert lex(raw) == [
+        Token(TokenType.OPEN_BRACKET, "[", 0),
+        Token(TokenType.BOOLEAN, "true", 1),
+        Token(TokenType.COMMA, ",", 5),
+        Token(TokenType.BOOLEAN, "false", 7),
+        Token(TokenType.COMMA, ",", 12),
+        Token(TokenType.NULL, "null", 14),
+        Token(TokenType.CLOSE_BRACKET, "]", 18),
+    ]
+
+
+def test_lex_nested_list():
+    raw = "[true, [true, false]]"
+    assert lex(raw) == [
+        Token(TokenType.OPEN_BRACKET, "[", 0),
+        Token(TokenType.BOOLEAN, "true", 1),
+        Token(TokenType.COMMA, ",", 5),
+        Token(TokenType.OPEN_BRACKET, "[", 7),
+        Token(TokenType.BOOLEAN, "true", 8),
+        Token(TokenType.COMMA, ",", 12),
+        Token(TokenType.BOOLEAN, "false", 14),
+        Token(TokenType.CLOSE_BRACKET, "]", 19),
+        Token(TokenType.CLOSE_BRACKET, "]", 20),
+    ]
