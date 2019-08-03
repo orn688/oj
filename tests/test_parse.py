@@ -2,7 +2,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from oj.exceptions import InvalidJSON
+from oj.exceptions import JSONDecodeError
 from oj.parse import parse_number, parse_string
 from oj.tokens import Token, TokenType
 
@@ -48,7 +48,7 @@ def test_parse_number_float(num):
 
 def test_parse_number_rejects_leading_zeros():
     token = Token(TokenType.NUMBER, "05", 0)
-    with pytest.raises(InvalidJSON):
+    with pytest.raises(JSONDecodeError):
         parse_number(token)
 
 

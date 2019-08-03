@@ -2,11 +2,11 @@ import json
 from string import printable
 
 import pytest
-from hypothesis import example, given, settings
+from hypothesis import given, settings
 from hypothesis import strategies as st
 
 import oj
-from oj.exceptions import InvalidJSON
+from oj.exceptions import JSONDecodeError
 
 
 @st.composite
@@ -92,7 +92,7 @@ def test_compared_to_stdlib_corrupted_json(input_json):
 
     try:
         oj_result = oj.loads(input_json)
-    except InvalidJSON as exc:
+    except JSONDecodeError as exc:
         oj_raises = True
         oj_result = exc
     else:
@@ -114,7 +114,7 @@ def test_compared_to_stdlib_random_text(input_text):
 
     try:
         oj_result = oj.loads(input_text)
-    except InvalidJSON as exc:
+    except oj.JSONDecodeError as exc:
         oj_raises = True
         oj_result = exc
     else:

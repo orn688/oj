@@ -3,7 +3,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 import oj
-from oj.exceptions import InvalidJSON
+from oj.exceptions import JSONDecodeError
 
 
 @pytest.mark.parametrize("boolean", [True, False])
@@ -71,5 +71,5 @@ def test_loads_object():
 
 
 def test_rejects_non_string_keys():
-    with pytest.raises(InvalidJSON):
+    with pytest.raises(JSONDecodeError):
         assert oj.loads('{5: "val"}')

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable, List, Optional
 
-from oj.exceptions import InvalidJSON
+from oj.exceptions import JSONDecodeError
 from oj.tokens import Token, TokenType
 
 JSON_WHITESPACE = " \t\r\n"
@@ -44,7 +44,7 @@ def lex(json_string: str) -> List[Token]:
                 index = match.next_index
                 break
         if not match:
-            raise InvalidJSON(f"invalid character at index {index}")
+            raise JSONDecodeError(f"invalid character at index {index}")
     return tokens
 
 
@@ -129,4 +129,4 @@ def lex_string(json_string: str, start_index: int) -> Optional[TokenMatch]:
             return TokenMatch(token=token, next_index=close_index + 1)
 
     # Got to the end of the input string without finding a closing quote.
-    raise InvalidJSON(f"unterminated string starting at index {start_index}")
+    raise JSONDecodeError(f"unterminated string starting at index {start_index}")

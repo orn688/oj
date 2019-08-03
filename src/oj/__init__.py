@@ -1,5 +1,6 @@
 from typing import IO, Union
 
+from oj.exceptions import JSONDecodeError  # noqa: F401
 from oj.lex import lex
 from oj.parse import parse
 
