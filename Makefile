@@ -15,7 +15,7 @@ lint:
 
 test:
 	# Exclude slower fuzz tests by default.
-	pipenv run pytest -v -m "not fuzz"
+	pipenv run pytest -m "not fuzz"
 
 testall:
 	pipenv run pytest
