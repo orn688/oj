@@ -8,4 +8,5 @@ setup(
     author_email="orn688@gmail.com",
     packages=["oj"],
     package_dir={"": "src"},
+    python_requires=">=3.7",
 )
