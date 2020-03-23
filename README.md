@@ -1,7 +1,6 @@
 # OJ – Oliver's JSON Parser
 
 [![Actions Status](https://github.com/orn688/oj/workflows/CI/badge.svg)](https://github.com/orn688/oj/actions)
-
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 Based on [Phil Eaton's tutorial](http://notes.eatonphil.com/writing-a-simple-json-parser.html).
